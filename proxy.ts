@@ -6,7 +6,7 @@ const publicRoutes = ["/auth/login", "/auth/register", "/auth/error", "/api/auth
 
 const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   if (!secret) return NextResponse.next();
 
   try {
@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   } catch (e) {
-    console.error("Middleware error:", e);
+    console.error("Proxy error:", e);
   }
 
   return NextResponse.next();
