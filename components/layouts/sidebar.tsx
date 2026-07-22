@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { href: "/dashboard", label: "Tableau de bord", icon: "◈" },
   { href: "/projects", label: "Mes projets", icon: "☰" },
-  { href: "/billing", label: "Abonnement", icon: "⚙" },
 ];
 
 export function Sidebar({ className }: { className?: string }) {
