@@ -36,7 +36,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ id: user.id, email: user.email, name: user.name, workspaceId: workspace.id }, { status: 201 });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
     console.error("Register error:", error);
-    return NextResponse.json({ error: "Erreur lors de l'inscription" }, { status: 500 });
+    return NextResponse.json({ error: `Erreur lors de l'inscription: ${message}` }, { status: 500 });
   }
 }
