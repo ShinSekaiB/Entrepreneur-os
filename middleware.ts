@@ -4,19 +4,27 @@ import { getToken } from "next-auth/jwt";
 
 const publicRoutes = ["/auth/login", "/auth/register", "/auth/error", "/api/auth"];
 
+const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
-  const { pathname } = request.nextUrl;
+  if (!secret) return NextResponse.next();
 
-  const isPublic = publicRoutes.some((route) => pathname.startsWith(route));
-  const isStatic = pathname.startsWith("/_next") || pathname.startsWith("/icons") || pathname === "/favicon.ico";
+  try {
+    const token = await getToken({ req: request, secret });
+    const { pathname } = request.nextUrl;
 
-  if (isStatic || isPublic) return NextResponse.next();
+    const isPublic = publicRoutes.some((route) => pathname.startsWith(route));
+    const isStatic = pathname.startsWith("/_next") || pathname.startsWith("/icons") || pathname === "/favicon.ico";
 
-  if (!token) {
-    const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    if (isStatic || isPublic) return NextResponse.next();
+
+    if (!token) {
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  } catch (e) {
+    console.error("Middleware error:", e);
   }
 
   return NextResponse.next();
