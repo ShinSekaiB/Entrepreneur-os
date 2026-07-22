@@ -28,6 +28,7 @@ export default async function BusinessQuestionnairePage({ params }: { params: Pr
       </div>
       <BusinessForm
         projectId={id}
+        projectSector={project.sector}
         initialData={{
           problem: project.businessData?.problem,
           solution: project.businessData?.solution,

@@ -33,6 +33,20 @@ enum AnalysisType {
   MARKETING
   FINANCIAL
   GENERAL
+  REALISATION
+  FINAL
+}
+
+model RealisationData {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("realisation_data")
 }
 
 enum MemberRole {
@@ -154,6 +168,7 @@ model Project {
   workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   businessData   BusinessData?
   marketingData  MarketingData?
+  realisationData RealisationData?
   projectMemory  ProjectMemory?
   progress       ProjectProgress?
   analyses       Analysis[]

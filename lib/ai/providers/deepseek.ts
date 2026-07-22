@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { AI_CONFIG } from "../config";
 import type { AIProvider, AIProviderOptions, AIResponse } from "./interface";
 
-const MISSING_KEY_ERROR = "DEEPSEEK_API_KEY n'est pas configurée. L'IA n'est pas disponible.";
+const MISSING_KEY_ERROR = "La clé API n'est pas configurée (DEEPSEEK_API_KEY). Obtenez une clé gratuite sur https://console.groq.com/keys";
 
 function getClient(): OpenAI {
   if (!process.env.DEEPSEEK_API_KEY) {
@@ -10,7 +10,7 @@ function getClient(): OpenAI {
   }
   return new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
-    baseURL: "https://api.deepseek.com/v1",
+    baseURL: "https://api.groq.com/openai/v1",
   });
 }
 

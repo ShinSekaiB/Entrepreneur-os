@@ -64,6 +64,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
+          <TabsTrigger value="analyses">Analyses</TabsTrigger>
           <TabsTrigger value="tasks">Tâches</TabsTrigger>
           <TabsTrigger value="recommendations">Recommandations</TabsTrigger>
         </TabsList>
@@ -85,6 +86,31 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="analyses" className="space-y-3">
+          {analyses.length === 0 ? (
+            <Card>
+              <CardContent className="py-6 text-center text-muted-foreground">
+                <p>Aucune analyse pour le moment.</p>
+                <p className="text-sm mt-1">Utilisez Business Architect ou Marketing Architect pour générer une analyse.</p>
+              </CardContent>
+            </Card>
+          ) : analyses.map((a) => (
+            <Card key={a.id}>
+              <CardContent className="flex items-center justify-between py-4">
+                <div>
+                  <p className="font-medium">{a.type === "BUSINESS" ? "Analyse Business" : "Analyse Marketing"}</p>
+                  <p className="text-sm text-muted-foreground">Score: {a.score ?? "—"} · {new Date(a.createdAt).toLocaleDateString("fr-FR")}</p>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/projects/${id}/analysis?view=${a.type === "BUSINESS" ? "business" : "marketing"}`}>
+                    Voir l&apos;analyse
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-2">

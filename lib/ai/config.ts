@@ -1,6 +1,6 @@
 export const AI_CONFIG = {
-  provider: "deepseek" as const,
-  model: "deepseek-chat",
+  provider: "groq" as const,
+  model: "llama-3.3-70b-versatile",
   temperature: 0.7,
   maxTokens: 4096,
   timeoutMs: 30000,
@@ -16,16 +16,16 @@ export const AI_CONFIG = {
   memory: {
     maxMessages: 50,
     maxTokens: 3000,
-    summaryModel: "deepseek-chat",
+    summaryModel: "llama-3.3-70b-versatile",
   },
   quotas: {
-    FREE: { requestsPerDay: 10, tokensPerMonth: 100000 },
-    PRO: { requestsPerDay: 50, tokensPerMonth: 1000000 },
-    BUSINESS: { requestsPerDay: 200, tokensPerMonth: 5000000 },
-    EXPERT: { requestsPerDay: 500, tokensPerMonth: 15000000 },
+    FREE: { requestsPerDay: 100, tokensPerMonth: 500000 },
+    PRO: { requestsPerDay: 1000, tokensPerMonth: 5000000 },
+    BUSINESS: { requestsPerDay: 5000, tokensPerMonth: 25000000 },
+    EXPERT: { requestsPerDay: 10000, tokensPerMonth: 100000000 },
   },
   costs: {
-    "deepseek-chat": { input: 0, output: 0 },
+    "llama-3.3-70b-versatile": { input: 0, output: 0 },
   },
 };
 

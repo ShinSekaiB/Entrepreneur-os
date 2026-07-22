@@ -29,6 +29,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ id: 
       <MarketingForm
         projectId={id}
         projectName={project.name}
+        projectDescription={project.description}
         initialData={{
           audience: project.marketingData?.audience as string[] | undefined,
           brandTone: project.marketingData?.brandTone ?? undefined,

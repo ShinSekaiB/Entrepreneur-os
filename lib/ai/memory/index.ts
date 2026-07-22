@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { Message } from "@/types";
+import { getSectorKnowledge } from "@/lib/ai/sector-knowledge";
 
 export async function getProjectMemory(projectId: string) {
   const memory = await prisma.projectMemory.findUnique({ where: { projectId } });
@@ -53,6 +54,9 @@ export async function buildContext(projectId: string): Promise<string> {
 
   const mem = project.projectMemory;
   if (mem?.summary) parts.push(`\nRésumé des échanges précédents:\n${mem.summary}`);
+
+  const sectorKnowledge = getSectorKnowledge(project.sector);
+  if (sectorKnowledge) parts.push(sectorKnowledge);
 
   return parts.join("\n");
 }
