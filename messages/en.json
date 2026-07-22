@@ -1,0 +1,64 @@
+{
+  "en": {
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "loading": "Loading...",
+      "error": "An error occurred",
+      "success": "Operation successful",
+      "confirm": "Confirm"
+    },
+    "auth": {
+      "login": "Login",
+      "register": "Sign up",
+      "email": "Email",
+      "password": "Password",
+      "signInWithGoogle": "Continue with Google",
+      "signInWithEmail": "Continue with email",
+      "logout": "Logout"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "myProjects": "My projects",
+      "newProject": "New project",
+      "score": "Score"
+    },
+    "project": {
+      "create": "Create project",
+      "name": "Project name",
+      "description": "Description",
+      "sector": "Industry sector",
+      "businessArchitect": "Business Architect",
+      "marketingArchitect": "Marketing Architect",
+      "overview": "Overview"
+    },
+    "business": {
+      "title": "Business Architect",
+      "questionnaire": "Questionnaire",
+      "analysis": "Analysis",
+      "score": "Business Score",
+      "problem": "Problem solved",
+      "solution": "Proposed solution",
+      "target": "Target customer",
+      "valueProposition": "Value proposition",
+      "businessModel": "Business model"
+    },
+    "marketing": {
+      "title": "Marketing Architect",
+      "positioning": "Positioning",
+      "audience": "Target audience",
+      "persona": "Persona",
+      "channels": "Channels",
+      "strategy": "Strategy"
+    },
+    "ai": {
+      "analyzing": "Analyzing...",
+      "generating": "Generating...",
+      "retry": "Retry",
+      "error": "AI error"
+    }
+  }
+}

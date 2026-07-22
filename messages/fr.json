@@ -1,0 +1,64 @@
+{
+  "fr": {
+    "common": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "create": "Créer",
+      "loading": "Chargement...",
+      "error": "Une erreur est survenue",
+      "success": "Opération réussie",
+      "confirm": "Confirmer"
+    },
+    "auth": {
+      "login": "Connexion",
+      "register": "Inscription",
+      "email": "Email",
+      "password": "Mot de passe",
+      "signInWithGoogle": "Continuer avec Google",
+      "signInWithEmail": "Continuer par email",
+      "logout": "Déconnexion"
+    },
+    "dashboard": {
+      "title": "Tableau de bord",
+      "myProjects": "Mes projets",
+      "newProject": "Nouveau projet",
+      "score": "Score"
+    },
+    "project": {
+      "create": "Créer un projet",
+      "name": "Nom du projet",
+      "description": "Description",
+      "sector": "Secteur d'activité",
+      "businessArchitect": "Business Architect",
+      "marketingArchitect": "Marketing Architect",
+      "overview": "Vue d'ensemble"
+    },
+    "business": {
+      "title": "Business Architect",
+      "questionnaire": "Questionnaire",
+      "analysis": "Analyse",
+      "score": "Score Business",
+      "problem": "Problème résolu",
+      "solution": "Solution proposée",
+      "target": "Client cible",
+      "valueProposition": "Proposition de valeur",
+      "businessModel": "Modèle économique"
+    },
+    "marketing": {
+      "title": "Marketing Architect",
+      "positioning": "Positionnement",
+      "audience": "Audience cible",
+      "persona": "Persona",
+      "channels": "Canaux",
+      "strategy": "Stratégie"
+    },
+    "ai": {
+      "analyzing": "Analyse en cours...",
+      "generating": "Génération en cours...",
+      "retry": "Réessayer",
+      "error": "Erreur de l'IA"
+    }
+  }
+}
