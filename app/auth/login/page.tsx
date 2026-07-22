@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +10,29 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleEmailSignIn = async () => {
-    if (!email) return;
+  const handleLogin = async () => {
+    if (!email || !password) return;
     setLoading(true);
-    await signIn("email", { email, callbackUrl: "/dashboard" });
+    setError("");
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      callbackUrl: "/dashboard",
+    });
+
+    if (result?.error) {
+      setError("Email ou mot de passe incorrect");
+      setLoading(false);
+    } else if (result?.ok) {
+      router.push("/dashboard");
+    }
   };
 
   return (
@@ -25,6 +43,9 @@ export default function LoginPage() {
           <CardDescription>Connectez-vous à votre espace Entrepreneur OS</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && (
+            <p className="text-sm text-red-500 text-center">{error}</p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -35,8 +56,19 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <Button className="w-full" onClick={handleEmailSignIn} disabled={loading}>
-            {loading ? "Envoi..." : "Continuer par email"}
+          <div className="space-y-2">
+            <Label htmlFor="password">Mot de passe</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Votre mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            />
+          </div>
+          <Button className="w-full" onClick={handleLogin} disabled={loading}>
+            {loading ? "Connexion..." : "Se connecter"}
           </Button>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
