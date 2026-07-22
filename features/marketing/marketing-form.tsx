@@ -101,12 +101,17 @@ export function MarketingForm({ projectId, projectName, projectDescription, init
     return () => clearTimeout(timer);
   }, [form, projectId]);
 
+  const saveForm = () => {
+    sessionStorage.setItem(`marketing-form-${projectId}`, JSON.stringify(form));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.targetAudience) {
       setError("Veuillez décrire votre audience cible");
       return;
     }
+    saveForm();
     setLoading(true);
     setError("");
 
@@ -129,6 +134,7 @@ export function MarketingForm({ projectId, projectName, projectDescription, init
         return;
       }
 
+      saveForm();
       sessionStorage.setItem(`marketing-analysis-${projectId}`, data.content);
       router.push(`/projects/${projectId}/analysis?view=marketing`);
     } catch (err) {

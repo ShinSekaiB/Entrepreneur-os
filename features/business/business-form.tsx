@@ -117,12 +117,17 @@ export function BusinessForm({ projectId, projectSector, initialData }: Business
     return () => clearTimeout(timer);
   }, [form, projectId]);
 
+  const saveForm = () => {
+    sessionStorage.setItem(`business-form-${projectId}`, JSON.stringify(form));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.problem || !form.solution) {
       setError("Veuillez remplir au moins le problème et la solution");
       return;
     }
+    saveForm();
     setLoading(true);
     setError("");
 
@@ -145,6 +150,7 @@ export function BusinessForm({ projectId, projectSector, initialData }: Business
         return;
       }
 
+      saveForm();
       sessionStorage.setItem(`analysis-${projectId}`, data.content);
       router.push(`/projects/${projectId}/analysis?view=business`);
     } catch (err) {
