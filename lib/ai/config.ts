@@ -1,6 +1,6 @@
 export const AI_CONFIG = {
-  provider: "openai" as const,
-  model: "gpt-4o-mini",
+  provider: "deepseek" as const,
+  model: "deepseek-chat",
   temperature: 0.7,
   maxTokens: 4096,
   timeoutMs: 30000,
@@ -16,7 +16,7 @@ export const AI_CONFIG = {
   memory: {
     maxMessages: 50,
     maxTokens: 3000,
-    summaryModel: "gpt-4o-mini",
+    summaryModel: "deepseek-chat",
   },
   quotas: {
     FREE: { requestsPerDay: 10, tokensPerMonth: 100000 },
@@ -25,7 +25,7 @@ export const AI_CONFIG = {
     EXPERT: { requestsPerDay: 500, tokensPerMonth: 15000000 },
   },
   costs: {
-    "gpt-4o-mini": { input: 0.15, output: 0.6 },
+    "deepseek-chat": { input: 0, output: 0 },
   },
 };
 

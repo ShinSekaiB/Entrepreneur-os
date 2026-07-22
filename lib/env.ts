@@ -7,6 +7,7 @@ const envSchema = z.object({
   AUTH_GOOGLE_SECRET: z.string().optional(),
   EMAIL_SERVER: z.string().optional(),
   EMAIL_FROM: z.string().email().optional(),
+  DEEPSEEK_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),

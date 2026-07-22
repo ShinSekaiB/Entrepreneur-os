@@ -8,9 +8,9 @@ import { buildContext } from "@/lib/ai/memory";
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.DEEPSEEK_API_KEY) {
       return NextResponse.json(
-        { error: "IA non configurée", details: "Ajoutez une clé OPENAI_API_KEY dans les variables d'environnement." },
+        { error: "IA non configurée", details: "Ajoutez une clé DEEPSEEK_API_KEY (gratuite sur https://platform.deepseek.com) dans les variables d'environnement." },
         { status: 503 }
       );
     }
