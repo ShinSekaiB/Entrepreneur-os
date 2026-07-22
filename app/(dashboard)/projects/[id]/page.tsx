@@ -6,22 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreCard } from "@/components/ui/score-card";
 import Link from "next/link";
+import type { Task, Recommendation } from "@prisma/client";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/auth/login");
 
-  const [project, tasks, recommendations, analyses, progress] = await Promise.all([
-    prisma.project.findUnique({
-      where: { id },
-      include: { businessData: true, marketingData: true },
-    }),
-    prisma.task.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" } }),
-    prisma.recommendation.findMany({ where: { projectId: id }, orderBy: { priority: "asc" } }),
-    prisma.analysis.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" }, take: 5 }),
-    prisma.projectProgress.findUnique({ where: { projectId: id } }),
-  ]);
+  const project = await prisma.project.findUnique({
+    where: { id },
+    include: { businessData: true, marketingData: true },
+  });
+  const tasks: Task[] = await prisma.task.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" } });
+  const recommendations: Recommendation[] = await prisma.recommendation.findMany({ where: { projectId: id }, orderBy: { priority: "asc" } });
+  const analyses = await prisma.analysis.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" }, take: 5 });
+  const progress = await prisma.projectProgress.findUnique({ where: { projectId: id } });
 
   if (!project) notFound();
 
@@ -55,7 +54,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-sm">Analyses</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{analyses.length}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold">{analyses?.length ?? 0}</p></CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-sm">Recommandations</CardTitle></CardHeader>
