@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
-  AUTH_SECRET: z.string().min(1),
+  DATABASE_URL: z.string().url().optional(),
+  AUTH_SECRET: z.string().min(1).optional().default("dev-secret-not-production"),
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
   EMAIL_SERVER: z.string().optional(),
   EMAIL_FROM: z.string().email().optional(),
-  OPENAI_API_KEY: z.string().min(1),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
+  OPENAI_API_KEY: z.string().optional(),
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
@@ -18,8 +18,7 @@ const envSchema = z.object({
 
 const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {
-  console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);
-  throw new Error("Invalid environment variables");
+  console.warn("⚠️ Environment variables warnings:", parsed.error.flatten().fieldErrors);
 }
 
-export const env = parsed.data;
+export const env = parsed.data ?? {};

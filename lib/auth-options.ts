@@ -12,10 +12,12 @@ export const authOptions: NextAuthOptions = {
     newUser: "/auth/compte",
   },
   providers: [
-    EmailProvider({
-      server: process.env.EMAIL_SERVER!,
-      from: process.env.EMAIL_FROM!,
-    }),
+    ...(process.env.EMAIL_SERVER && process.env.EMAIL_FROM
+      ? [EmailProvider({
+          server: process.env.EMAIL_SERVER,
+          from: process.env.EMAIL_FROM,
+        })]
+      : []),
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
       ? [GoogleProvider({
           clientId: process.env.AUTH_GOOGLE_ID,

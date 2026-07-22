@@ -8,6 +8,13 @@ import { buildContext } from "@/lib/ai/memory";
 
 export async function POST(request: Request) {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "IA non configurée", details: "Ajoutez une clé OPENAI_API_KEY dans les variables d'environnement." },
+        { status: 503 }
+      );
+    }
+
     const userId = await requireAuth();
     const { prompt, projectId, system } = await request.json();
 
