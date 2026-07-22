@@ -1,4 +1,4 @@
-import type { Project, Analysis, Recommendation, Task, BusinessData, MarketingData, Conversation } from "@prisma/client";
+import type { Project, Analysis, Recommendation, Task, BusinessData, MarketingData } from "@prisma/client";
 
 export type ProjectWithRelations = Project & {
   businessData: BusinessData | null;

@@ -32,21 +32,24 @@ export default function MarketingAnalysisPage({ params }: { params: Promise<{ id
 }
 
 function MarketingAnalysisContent({ projectId }: { projectId: string }) {
-  const [analysis, setAnalysis] = useState<MarketingAnalysis | null>(null);
+  const [analysis] = useState<MarketingAnalysis | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem(`marketing-analysis-${projectId}`);
+        return stored ? JSON.parse(stored) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const router = useRouter();
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(`marketing-analysis-${projectId}`);
-    if (stored) {
-      try {
-        setAnalysis(JSON.parse(stored));
-      } catch {
-        router.push(`/projects/${projectId}/marketing`);
-      }
-    } else {
+    if (!analysis) {
       router.push(`/projects/${projectId}/marketing`);
     }
-  }, [projectId, router]);
+  }, [analysis, projectId, router]);
 
   if (!analysis) {
     return (

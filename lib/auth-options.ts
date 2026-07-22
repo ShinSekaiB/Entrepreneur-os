@@ -9,7 +9,7 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: {
     signIn: "/auth/login",
-    newUser: "/auth/compte",
+    newUser: "/auth/register",
   },
   providers: [
     ...(process.env.EMAIL_SERVER && process.env.EMAIL_FROM

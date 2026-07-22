@@ -20,7 +20,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const tasks: Task[] = await prisma.task.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" } });
   const recommendations: Recommendation[] = await prisma.recommendation.findMany({ where: { projectId: id }, orderBy: { priority: "asc" } });
   const analyses = await prisma.analysis.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" }, take: 5 });
-  const progress = await prisma.projectProgress.findUnique({ where: { projectId: id } });
 
   if (!project) notFound();
 

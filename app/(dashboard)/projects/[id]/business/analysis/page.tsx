@@ -27,21 +27,24 @@ export default function BusinessAnalysisPage({ params }: { params: Promise<{ id:
 import React from "react";
 
 function BusinessAnalysisContent({ projectId }: { projectId: string }) {
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysis] = useState<AnalysisResult | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem(`analysis-${projectId}`);
+        return stored ? JSON.parse(stored) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const router = useRouter();
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(`analysis-${projectId}`);
-    if (stored) {
-      try {
-        setAnalysis(JSON.parse(stored));
-      } catch {
-        router.push(`/projects/${projectId}/business`);
-      }
-    } else {
+    if (!analysis) {
       router.push(`/projects/${projectId}/business`);
     }
-  }, [projectId, router]);
+  }, [analysis, projectId, router]);
 
   if (!analysis) {
     return (

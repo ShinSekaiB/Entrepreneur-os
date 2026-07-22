@@ -1,13 +1,10 @@
 // npm install -D tsx
 import { PrismaClient } from "@prisma/client";
-import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("🌱 Seeding database...");
-
-  const demoPassword = await hash("demo1234", 12);
 
   const demoUser = await prisma.user.upsert({
     where: { email: "demo@entrepreneur-os.com" },
