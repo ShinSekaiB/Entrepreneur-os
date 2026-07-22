@@ -142,6 +142,9 @@ function UnifiedAnalysisContent({ projectId }: { projectId: string }) {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEnd = useRef<HTMLDivElement>(null);
 
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+
   const [realFormData, setRealFormData] = useState<Record<string, string>>({});
   const [realSubmitted, setRealSubmitted] = useState(false);
 
@@ -192,6 +195,36 @@ function UnifiedAnalysisContent({ projectId }: { projectId: string }) {
       setChat(prev => [...prev, { role: "assistant", content: data.content || "Erreur" }]);
     } catch { setChat(prev => [...prev, { role: "assistant", content: "Erreur réseau" }]) }
     finally { setChatLoading(false) }
+  };
+
+  const generateSuggestions = async () => {
+    const ctx = [
+      biz ? `Analyse Business (${biz.score}/100): ${biz.summary}\nForces: ${(asArr(biz.strengths) as string[]).join(", ")}\nFaiblesses: ${(asArr(biz.weaknesses) as string[]).join(", ")}` : "",
+      mkt ? `Analyse Marketing (${mkt.score}/100): ${mkt.summary}\nPositionnement: ${mkt.positioning}` : "",
+    ].filter(Boolean).join("\n\n---\n\n");
+    if (!ctx) return;
+    setSuggestionsLoading(true);
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `Tu es un coach entrepreneurial. Basé sur les analyses suivantes, génère 3 à 5 suggestions concrètes pour améliorer les réponses du formulaire (problème, solution, client cible, valeur, modèle économique pour Business / audience, concurrents, ton, objectifs pour Marketing).
+
+Retourne UNIQUEMENT un tableau JSON valide de strings, ex: ["Suggestion 1", "Suggestion 2", ...]
+
+Analyses du projet :
+${ctx}
+
+Chaque suggestion doit être actionable, précise (ex: "Ajoute un chiffre sur la taille du marché dans la section client cible" plutôt que "Améliore la description").`,
+          projectId,
+          system: "Tu es un expert en entrepreneuriat. Sois précis et actionable.",
+        }),
+      });
+      const data = await res.json();
+      const parsed = JSON.parse(typeof data.content === "string" ? data.content : JSON.stringify(data.content));
+      setSuggestions(asArr(parsed) as string[]);
+    } catch { setSuggestions(["Impossible de générer des suggestions pour le moment."]) }
+    finally { setSuggestionsLoading(false) }
   };
 
   const generateRealisation = async () => {
@@ -250,9 +283,9 @@ Produis un verdict final, une note de coherence strategique, les écarts entre t
 
   return (
     <div className="flex gap-6">
-      {/* Chat sidebar */}
-      <div className="w-80 shrink-0">
-        <Card className="sticky top-8">
+      {/* Sidebar : Assistant + Suggestions */}
+      <div className="w-80 shrink-0 space-y-4">
+        <Card>
           <CardHeader className="pb-3"><CardTitle className="text-sm">Assistant IA</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3 h-80 overflow-y-auto mb-3 pr-1">
@@ -270,6 +303,32 @@ Produis un verdict final, une note de coherence strategique, les écarts entre t
             </form>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">Suggestions d&apos;amélioration</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2 min-h-24">
+              {suggestions.length === 0 && !suggestionsLoading && (
+                <p className="text-xs text-muted-foreground">Générez des suggestions pour améliorer vos réponses aux formulaires.</p>
+              )}
+              {suggestionsLoading && (
+                <p className="text-xs text-muted-foreground animate-pulse">Génération des suggestions...</p>
+              )}
+              {suggestions.map((s, i) => (
+                <p key={i} className="text-xs bg-muted rounded-md p-2 leading-relaxed">{s}</p>
+              ))}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full mt-3"
+              disabled={suggestionsLoading || (!biz && !mkt)}
+              onClick={generateSuggestions}
+            >
+              {suggestionsLoading ? "Génération..." : "Générer des suggestions"}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main content */}
@@ -279,14 +338,26 @@ Produis un verdict final, une note de coherence strategique, les écarts entre t
             <h1 className="text-2xl font-bold">Pilotage du projet</h1>
             <p className="text-sm text-muted-foreground">Analyse → Réalisation → Verdict final</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             <Button variant="ghost" size="sm" onClick={() => router.push(`/projects/${projectId}`)}>← Projet</Button>
             <Button variant="outline" size="sm" onClick={() => { sessionStorage.removeItem(`analysis-${projectId}`); router.push(`/projects/${projectId}/business`) }}>
-              Réinitialiser Business
+              Modifier Business
             </Button>
             <Button variant="outline" size="sm" onClick={() => { sessionStorage.removeItem(`marketing-analysis-${projectId}`); router.push(`/projects/${projectId}/marketing`) }}>
-              Réinitialiser Marketing
+              Modifier Marketing
             </Button>
+            <button
+              className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+              onClick={() => {
+                sessionStorage.removeItem(`business-form-${projectId}`);
+                sessionStorage.removeItem(`marketing-form-${projectId}`);
+                sessionStorage.removeItem(`analysis-${projectId}`);
+                sessionStorage.removeItem(`marketing-analysis-${projectId}`);
+                router.push(`/projects/${projectId}/business`);
+              }}
+            >
+              Tout réinitialiser
+            </button>
           </div>
         </div>
 

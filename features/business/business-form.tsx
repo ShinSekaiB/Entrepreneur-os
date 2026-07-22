@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,6 +99,23 @@ export function BusinessForm({ projectId, projectSector, initialData }: Business
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem(`business-form-${projectId}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setForm((prev) => ({ ...prev, ...parsed }));
+      } catch { /* ignore */ }
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      sessionStorage.setItem(`business-form-${projectId}`, JSON.stringify(form));
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [form, projectId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
