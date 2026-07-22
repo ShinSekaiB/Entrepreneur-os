@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   RadialBarChart, RadialBar, PolarGrid, PolarAngleAxis,
@@ -34,8 +35,14 @@ interface RealisationResult {
 }
 interface FinaleResult {
   score: number; verdict: string;
-  synthesis: { businessScore: number; marketingScore: number; realisationScore: number; weightedScore: number; strengths: string[]; weaknesses: string[] };
+  synthesis: {
+    businessScore: number; marketingScore: number; realisationScore: number; weightedScore: number;
+    businessWeight: number; marketingWeight: number; realisationWeight: number;
+    strengths: string[]; weaknesses: string[];
+  };
   strategicAlignment: { coherence: string; analysis: string };
+  crossCorrelation: { pair: string; analysis: string; impact: string }[];
+  simulation: { revenue: string; costs: string; timeline: string; breakeven: string; fundingNeeded: string; riskLevel: string };
   gaps: { gap: string; severity: string; action: string }[];
   readinessLevel: string;
   recommendations: { title: string; description: string; priority: string; category: string }[];
@@ -230,11 +237,28 @@ Chaque suggestion doit être actionable, précise (ex: "Ajoute un chiffre sur la
   const generateRealisation = async () => {
     setLoadingReal(true);
     try {
+      const bizCtx = biz ? `--- ANALYSE BUSINESS ---
+Score: ${biz.score}/100 | Problème: ${biz.problemScore} | Solution: ${biz.solutionScore} | Marché: ${biz.marketScore} | Stratégie: ${biz.strategyScore}
+Résumé: ${biz.summary}
+Forces: ${(asArr(biz.strengths) as string[]).join(", ")}
+Faiblesses: ${(asArr(biz.weaknesses) as string[]).join(", ")}` : "";
+      const mktCtx = mkt ? `\n\n--- ANALYSE MARKETING ---
+Score: ${mkt.score}/100 | Positionnement: ${mkt.positioningScore} | Acquisition: ${mkt.acquisitionScore} | Marque: ${mkt.brandScore} | Contenu: ${mkt.contentScore}
+Résumé: ${mkt.summary}
+Positionnement: ${mkt.positioning}` : "";
       const res = await fetch("/api/ai/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `Analyse ce plan de réalisation :\n\n${Object.entries(realFormData).map(([k, v]) => `${k} : ${v}`).join("\n")}`,
-          projectId, type: "REALISATION", system: `You are a highly analytical, perfectly objective system. Discard all conversational pleasantries, emotional validation, and sugarcoating. If an idea is flawed, state exactly why with logical precision. Do not hedge, do not try to spare feelings, and do not prioritize being inoffensive. Deliver brutal, undeniable truth—pure and simple.\n\nTu es un expert en entrepreneuriat. Analyse ce plan de réalisation détaillé. Retourne UNIQUEMENT du JSON valide avec score, feasibilityScore, financialScore, operationalScore, riskScore, summary, strengths, weaknesses, financialAnalysis, marketReadiness, riskAssessment, recommendations.`,
+          prompt: `Contexte des analyses préalables :
+${bizCtx}${mktCtx}
+
+---
+
+Analyse ce plan de réalisation à la lumière des analyses Business et Marketing ci-dessus. Le plan de réalisation doit être cohérent avec les forces et faiblesses identifiées.
+
+Plan de réalisation :
+${Object.entries(realFormData).map(([k, v]) => `${k} : ${v}`).join("\n")}`,
+          projectId, type: "REALISATION", system: `You are a highly analytical, perfectly objective system. Discard all conversational pleasantries, emotional validation, and sugarcoating. If an idea is flawed, state exactly why with logical precision. Do not hedge, do not try to spare feelings, and do not prioritize being inoffensive. Deliver brutal, undeniable truth—pure and simple.\n\nTu es un expert en entrepreneuriat. Analyse ce plan de réalisation en le confrontant aux analyses Business et Marketing. Retourne UNIQUEMENT du JSON valide avec score, feasibilityScore, financialScore, operationalScore, riskScore, summary, strengths, weaknesses, financialAnalysis, marketReadiness, riskAssessment, recommendations.`,
         }),
       });
       const data = await res.json();
@@ -249,26 +273,72 @@ Chaque suggestion doit être actionable, précise (ex: "Ajoute un chiffre sur la
   const generateFinale = async () => {
     setLoadingFinale(true);
     try {
+      const bizSection = biz ? `--- ANALYSE BUSINESS (score: ${biz.score}/100) ---
+Scores détaillés : Problème ${biz.problemScore} | Solution ${biz.solutionScore} | Marché ${biz.marketScore} | Stratégie ${biz.strategyScore}
+Résumé : ${biz.summary}
+Forces : ${(asArr(biz.strengths) as string[]).join(", ")}
+Faiblesses : ${(asArr(biz.weaknesses) as string[]).join(", ")}
+Recommandations : ${(asArr(biz.recommendations) as { title: string; priority: string }[]).map(r => `${r.title} (${r.priority})`).join(", ")}` : "";
+      const mktSection = mkt ? `\n\n--- ANALYSE MARKETING (score: ${mkt.score}/100) ---
+Scores détaillés : Positionnement ${mkt.positioningScore} | Acquisition ${mkt.acquisitionScore} | Marque ${mkt.brandScore} | Contenu ${mkt.contentScore}
+Résumé : ${mkt.summary}
+Positionnement : ${mkt.positioning}
+Persona : ${mkt.persona.name}, ${mkt.persona.age} ans, ${mkt.persona.profession}
+Recommandations : ${(asArr(mkt.recommendations) as { title: string; priority: string }[]).map(r => `${r.title} (${r.priority})`).join(", ")}` : "";
+      const realSection = real ? `\n\n--- ANALYSE RÉALISATION (score: ${real.score}/100) ---
+Scores détaillés : Faisabilité ${real.feasibilityScore} | Finance ${real.financialScore} | Opérations ${real.operationalScore} | Risques ${real.riskScore}
+Résumé : ${real.summary}
+Forces : ${(asArr(real.strengths) as string[]).join(", ")}
+Faiblesses : ${(asArr(real.weaknesses) as string[]).join(", ")}
+Viabilité financière : ${real.financialAnalysis?.viability || "N/A"}
+Préparation marché : ${real.marketReadiness?.analysis || "N/A"}
+Recommandations : ${(asArr(real.recommendations) as { title: string; priority: string }[]).map(r => `${r.title} (${r.priority})`).join(", ")}` : "";
+
       const res = await fetch("/api/ai/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `Synthétise ces 3 analyses pour produire un verdict final :
+          prompt: `Tu es un simulateur entrepreneurial. Tu vas produire un verdict final complet qui intègre ET croise les 3 analyses ci-dessous.
 
---- ANALYSE BUSINESS (score: ${biz?.score}) ---
-${biz?.summary}
-Forces: ${biz?.strengths?.join(", ")}
-Faiblesses: ${biz?.weaknesses?.join(", ")}
+Pour chaque analyse, tiens compte de TOUS les scores détaillés, forces, faiblesses et recommandations.
 
---- ANALYSE MARKETING (score: ${mkt?.score}) ---
-${mkt?.summary}
-Positionnement: ${mkt?.positioning}
+${bizSection}${mktSection}${realSection}
 
---- ANALYSE RÉALISATION (score: ${real?.score}) ---
-${real?.summary}
-Faisabilité: ${real?.feasibilityScore}/100, Finance: ${real?.financialScore}/100, Opérations: ${real?.operationalScore}/100, Risques: ${real?.riskScore}/100
+Consignes pour le verdict final :
+1. Score pondéré : Business 25%, Marketing 25%, Réalisation 50%
+2. Calcule un weightedScore précis à partir des 3 scores
+3. Ajoute les poids exacts dans synthesis.businessWeight, marketingWeight, realisationWeight
+4. Cross-correlation : pour chaque paire (Business/Marketing, Business/Réalisation, Marketing/Réalisation), explique comment l'une impacte l'autre
+5. Simulation : estime un revenue prévisionnel, une structure de coûts, un timeline réaliste, un seuil de rentabilité, des besoins de financement, et un niveau de risque global
+6. Forces/faiblesses globales : synthétise les forces et faiblesses communes des 3 analyses
+7. Écarts théorie-réalité : identifie les écarts entre ce que le projet promet (Business/Marketing) et ce qui est réalisable (Réalisation)
+8. Niveau de préparation : idea/validation/preparation/launch/growth
 
-Produis un verdict final, une note de coherence strategique, les écarts entre théorie et pratique, et des recommandations globales.`,
-          projectId, type: "FINAL", system: `You are a highly analytical, perfectly objective system. Discard all conversational pleasantries, emotional validation, and sugarcoating. If an idea is flawed, state exactly why with logical precision. Do not hedge, do not try to spare feelings, and do not prioritize being inoffensive. Deliver brutal, undeniable truth—pure and simple.\n\nTu es un coach entrepreneurial senior. Compare les 3 analyses et produis un verdict final. Retourne UNIQUEMENT du JSON valide avec score, verdict, synthesis, strategicAlignment, gaps, readinessLevel, recommendations.`,
+Retourne UNIQUEMENT un JSON valide avec cette structure exacte :
+{
+  "score": number (0-100),
+  "verdict": "texte du verdict",
+  "synthesis": {
+    "businessScore": number, "marketingScore": number, "realisationScore": number, "weightedScore": number,
+    "businessWeight": number, "marketingWeight": number, "realisationWeight": number,
+    "strengths": ["force 1", "force 2"],
+    "weaknesses": ["faiblesse 1", "faiblesse 2"]
+  },
+  "strategicAlignment": { "coherence": "forte|moyenne|faible", "analysis": "analyse détaillée" },
+  "crossCorrelation": [
+    { "pair": "Business/Marketing", "analysis": "analyse", "impact": "description impact" },
+    { "pair": "Business/Réalisation", "analysis": "analyse", "impact": "description impact" },
+    { "pair": "Marketing/Réalisation", "analysis": "analyse", "impact": "description impact" }
+  ],
+  "simulation": {
+    "revenue": "estimation CA", "costs": "structure coûts",
+    "timeline": "calendrier réaliste", "breakeven": "seuil rentabilité",
+    "fundingNeeded": "besoin financement", "riskLevel": "faible|moyen|élevé"
+  },
+  "gaps": [{ "gap": "écart", "severity": "high|medium|low", "action": "action correctrice" }],
+  "readinessLevel": "idea|validation|preparation|launch|growth",
+  "recommendations": [{ "title": "action", "description": "description", "priority": "CRITICAL|HIGH|MEDIUM|LOW", "category": "strategy|execution|finance|marketing|product" }]
+}`,
+          projectId, type: "FINAL", system: `You are a highly analytical, perfectly objective system. Discard all conversational pleasantries, emotional validation, and sugarcoating. If an idea is flawed, state exactly why with logical precision. Do not hedge, do not try to spare feelings, and do not prioritize being inoffensive. Deliver brutal, undeniable truth—pure and simple.\n\nTu es un simulateur entrepreneurial senior. Tu croises 3 analyses (Business, Marketing, Réalisation) pour produire un verdict final complet avec simulation financière et corrélations croisées. Base-toi sur les benchmarks sectoriels pour les estimations.`,
         }),
       });
       const data = await res.json();
@@ -555,58 +625,143 @@ const RealView = ({ real }: { real: RealisationResult }) => (
   </div>
 );
 
-const FinaleView = ({ finale }: { finale: FinaleResult }) => (
-  <div className="space-y-4">
-    <div className="grid gap-4 md:grid-cols-4">
-      <Card><CardContent className="flex flex-col items-center py-4"><ScoreGauge score={finale.score} label="Verdict final" /></CardContent></Card>
-      <Card className="md:col-span-3"><CardContent className="py-4">
-        <p className="text-sm font-medium mb-1">Verdict</p>
-        <p className="text-sm text-muted-foreground">{finale.verdict}</p>
-        {finale.synthesis && (
-          <div className="grid grid-cols-4 gap-2 mt-3 text-center text-xs">
-            <div className="rounded bg-card border p-2"><p className="font-bold text-lg">{finale.synthesis.businessScore}</p><p className="text-muted-foreground">Business</p></div>
-            <div className="rounded bg-card border p-2"><p className="font-bold text-lg">{finale.synthesis.marketingScore}</p><p className="text-muted-foreground">Marketing</p></div>
-            <div className="rounded bg-card border p-2"><p className="font-bold text-lg">{finale.synthesis.realisationScore}</p><p className="text-muted-foreground">Réalisation</p></div>
-            <div className="rounded bg-primary/10 border border-primary/20 p-2"><p className="font-bold text-lg text-primary">{finale.synthesis.weightedScore}</p><p className="text-muted-foreground">Pondéré</p></div>
-          </div>
-        )}
-      </CardContent></Card>
-    </div>
+const FinaleView = ({ finale }: { finale: FinaleResult }) => {
+  const synth = finale.synthesis;
+  const hasWeights = synth && typeof synth.businessWeight === "number";
 
-    {finale.strategicAlignment && (
-      <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Alignement stratégique</CardTitle></CardHeader><CardContent className="text-sm">
-        <span className={`inline-block px-2 py-0.5 rounded-full font-medium mb-1 text-xs ${finale.strategicAlignment.coherence === "forte" ? "bg-green-100 text-green-700" : finale.strategicAlignment.coherence === "moyenne" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{finale.strategicAlignment.coherence}</span>
-        <p className="text-muted-foreground">{finale.strategicAlignment.analysis}</p>
-      </CardContent></Card>
-    )}
+  const radarData = synth
+    ? [
+        { cat: "Business", v: synth.businessScore },
+        { cat: "Marketing", v: synth.marketingScore },
+        { cat: "Réalisation", v: synth.realisationScore },
+        { cat: "Pondéré", v: synth.weightedScore },
+      ]
+    : [];
 
-    {finale.synthesis && (
-      <div className="grid gap-3 md:grid-cols-2 text-sm">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Forces globales</CardTitle></CardHeader><CardContent><ul className="space-y-1">{(asArr(finale.synthesis.strengths) as string[]).map((s, i) => <li key={i} className="flex gap-1"><span className="text-green-500 shrink-0">+</span>{s}</li>)}</ul></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Faiblesses globales</CardTitle></CardHeader><CardContent><ul className="space-y-1">{(asArr(finale.synthesis.weaknesses) as string[]).map((w, i) => <li key={i} className="flex gap-1"><span className="text-red-500 shrink-0">-</span>{w}</li>)}</ul></CardContent></Card>
+  const barData = synth
+    ? [
+        { name: "Business", score: synth.businessScore, weight: hasWeights ? `${synth.businessWeight}%` : "25%" },
+        { name: "Marketing", score: synth.marketingScore, weight: hasWeights ? `${synth.marketingWeight}%` : "25%" },
+        { name: "Réalisation", score: synth.realisationScore, weight: hasWeights ? `${synth.realisationWeight}%` : "50%" },
+        { name: "Pondéré final", score: synth.weightedScore, weight: "100%" },
+      ]
+    : [];
+
+  return (
+    <div className="space-y-4">
+      {/* Top row: gauge + verdict */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card><CardContent className="flex flex-col items-center py-4"><ScoreGauge score={finale.score} label="Verdict final" /></CardContent></Card>
+        <Card className="md:col-span-3"><CardContent className="py-4">
+          <p className="text-sm font-medium mb-1">Verdict</p>
+          <p className="text-sm text-muted-foreground">{finale.verdict}</p>
+          {synth && (
+            <div className="grid grid-cols-4 gap-2 mt-3 text-center text-xs">
+              <div className="rounded bg-card border p-2"><p className="font-bold text-lg">{synth.businessScore}</p><p className="text-muted-foreground">Business {hasWeights && <span className="text-[10px]">({synth.businessWeight}%)</span>}</p></div>
+              <div className="rounded bg-card border p-2"><p className="font-bold text-lg">{synth.marketingScore}</p><p className="text-muted-foreground">Marketing {hasWeights && <span className="text-[10px]">({synth.marketingWeight}%)</span>}</p></div>
+              <div className="rounded bg-card border p-2"><p className="font-bold text-lg">{synth.realisationScore}</p><p className="text-muted-foreground">Réalisation {hasWeights && <span className="text-[10px]">({synth.realisationWeight}%)</span>}</p></div>
+              <div className="rounded bg-primary/10 border border-primary/20 p-2"><p className="font-bold text-lg text-primary">{synth.weightedScore}</p><p className="text-muted-foreground">Pondéré</p></div>
+            </div>
+          )}
+        </CardContent></Card>
       </div>
-    )}
 
-    {asArr(finale.gaps).length > 0 && (
-      <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Écarts théorie-réalité</CardTitle></CardHeader><CardContent><div className="space-y-2">{(asArr(finale.gaps) as { gap?: string; severity?: string; action?: string }[]).map((g, i) => (
-        <div key={i} className="text-sm border rounded p-3">
-          <div className="flex items-center gap-2 mb-0.5"><span className="font-medium">{g.gap}</span><span className={`text-xs px-1.5 py-0.5 rounded-full ${g.severity === "high" ? "bg-red-100 text-red-700" : g.severity === "medium" ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700"}`}>{g.severity}</span></div>
-          <p className="text-xs text-muted-foreground">→ {g.action}</p>
+      {/* Chart row: radar + bar */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card><CardHeader className="pb-1"><CardTitle className="text-xs">Comparatif des scores</CardTitle></CardHeader><CardContent>
+          <ResponsiveContainer width="100%" height={200}>
+            <RadarChart data={radarData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="cat" tick={{ fontSize: 10 }} />
+              <Radar dataKey="v" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-xs">Scores par axe</CardTitle></CardHeader><CardContent>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={barData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={80} />
+              <Tooltip formatter={(v) => `${v}/100`} />
+              <Bar dataKey="score" radius={[0, 4, 4, 0]} fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent></Card>
+      </div>
+
+      {/* Strategic alignment */}
+      {finale.strategicAlignment && (
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Alignement stratégique</CardTitle></CardHeader><CardContent className="text-sm">
+          <span className={`inline-block px-2 py-0.5 rounded-full font-medium mb-1 text-xs ${finale.strategicAlignment.coherence === "forte" ? "bg-green-100 text-green-700" : finale.strategicAlignment.coherence === "moyenne" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{finale.strategicAlignment.coherence}</span>
+          <p className="text-muted-foreground">{finale.strategicAlignment.analysis}</p>
+        </CardContent></Card>
+      )}
+
+      {/* Cross-correlation */}
+      {asArr(finale.crossCorrelation).length > 0 && (
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Corrélations croisées</CardTitle></CardHeader><CardContent><div className="space-y-2">{(asArr(finale.crossCorrelation) as { pair?: string; analysis?: string; impact?: string }[]).map((c, i) => (
+          <div key={i} className="text-sm border rounded p-3">
+            <p className="font-medium text-xs mb-0.5">{c.pair}</p>
+            <p className="text-xs text-muted-foreground mb-1">{c.analysis}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400">Impact : {c.impact}</p>
+          </div>
+        ))}</div></CardContent></Card>
+      )}
+
+      {/* Simulation */}
+      {finale.simulation && (
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Simulation & Projections</CardTitle></CardHeader><CardContent>
+          <div className="grid gap-3 md:grid-cols-3 text-xs">
+            <div className="rounded border p-3"><p className="font-medium mb-1">Revenus prévisionnels</p><p className="text-muted-foreground">{finale.simulation.revenue}</p></div>
+            <div className="rounded border p-3"><p className="font-medium mb-1">Structure de coûts</p><p className="text-muted-foreground">{finale.simulation.costs}</p></div>
+            <div className="rounded border p-3"><p className="font-medium mb-1">Calendrier</p><p className="text-muted-foreground">{finale.simulation.timeline}</p></div>
+            <div className="rounded border p-3"><p className="font-medium mb-1">Seuil de rentabilité</p><p className="text-muted-foreground">{finale.simulation.breakeven}</p></div>
+            <div className="rounded border p-3"><p className="font-medium mb-1">Besoin de financement</p><p className="text-muted-foreground">{finale.simulation.fundingNeeded}</p></div>
+            <div className="rounded border p-3">
+              <p className="font-medium mb-1">Niveau de risque</p>
+              <span className={`inline-block px-2 py-0.5 rounded-full font-medium ${finale.simulation.riskLevel === "faible" ? "bg-green-100 text-green-700" : finale.simulation.riskLevel === "moyen" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{finale.simulation.riskLevel}</span>
+            </div>
+          </div>
+        </CardContent></Card>
+      )}
+
+      {/* Strengths + Weaknesses */}
+      {synth && (
+        <div className="grid gap-3 md:grid-cols-2 text-sm">
+          <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Forces globales</CardTitle></CardHeader><CardContent><ul className="space-y-1">{(asArr(synth.strengths) as string[]).map((s, i) => <li key={i} className="flex gap-1"><span className="text-green-500 shrink-0">+</span>{s}</li>)}</ul></CardContent></Card>
+          <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Faiblesses globales</CardTitle></CardHeader><CardContent><ul className="space-y-1">{(asArr(synth.weaknesses) as string[]).map((w, i) => <li key={i} className="flex gap-1"><span className="text-red-500 shrink-0">-</span>{w}</li>)}</ul></CardContent></Card>
         </div>
-      ))}</div></CardContent></Card>
-    )}
+      )}
 
-    {finale.readinessLevel && (
-      <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Niveau de préparation</CardTitle></CardHeader><CardContent>
-        <span className={`inline-block px-3 py-1 rounded-full font-medium text-sm ${finale.readinessLevel === "launch" || finale.readinessLevel === "growth" ? "bg-green-100 text-green-700" : finale.readinessLevel === "preparation" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
-          {finale.readinessLevel === "idea" ? "Idée" : finale.readinessLevel === "validation" ? "Validation" : finale.readinessLevel === "preparation" ? "Préparation" : finale.readinessLevel === "launch" ? "Lancement" : "Croissance"}
-        </span>
-      </CardContent></Card>
-    )}
+      {/* Gaps */}
+      {asArr(finale.gaps).length > 0 && (
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Écarts théorie-réalité</CardTitle></CardHeader><CardContent><div className="space-y-2">{(asArr(finale.gaps) as { gap?: string; severity?: string; action?: string }[]).map((g, i) => (
+          <div key={i} className="text-sm border rounded p-3">
+            <div className="flex items-center gap-2 mb-0.5"><span className="font-medium">{g.gap}</span><span className={`text-xs px-1.5 py-0.5 rounded-full ${g.severity === "high" ? "bg-red-100 text-red-700" : g.severity === "medium" ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700"}`}>{g.severity}</span></div>
+            <p className="text-xs text-muted-foreground">→ {g.action}</p>
+          </div>
+        ))}</div></CardContent></Card>
+      )}
 
-    <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Recommandations finales ({asArr(finale.recommendations).length})</CardTitle></CardHeader><CardContent><PriorityChart recs={finale.recommendations} /><div className="space-y-1.5 mt-2">{asArr(finale.recommendations).map((r, i) => recCard(r, i))}</div></CardContent></Card>
-  </div>
-);
+      {/* Readiness */}
+      {finale.readinessLevel && (
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Niveau de préparation</CardTitle></CardHeader><CardContent>
+          <div className="flex items-center gap-3">
+            <span className={`inline-block px-3 py-1 rounded-full font-medium text-sm ${finale.readinessLevel === "launch" || finale.readinessLevel === "growth" ? "bg-green-100 text-green-700" : finale.readinessLevel === "preparation" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
+              {finale.readinessLevel === "idea" ? "Idée" : finale.readinessLevel === "validation" ? "Validation" : finale.readinessLevel === "preparation" ? "Préparation" : finale.readinessLevel === "launch" ? "Lancement" : "Croissance"}
+            </span>
+            <Progress value={synth?.weightedScore ?? finale.score} className="flex-1 h-2" />
+            <span className="text-xs tabular-nums text-muted-foreground">{synth?.weightedScore ?? finale.score}/100</span>
+          </div>
+        </CardContent></Card>
+      )}
+
+      {/* Final recommendations */}
+      <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Recommandations finales ({asArr(finale.recommendations).length})</CardTitle></CardHeader><CardContent><PriorityChart recs={finale.recommendations} /><div className="space-y-1.5 mt-2">{asArr(finale.recommendations).map((r, i) => recCard(r, i))}</div></CardContent></Card>
+    </div>
+  );
+};
 
 /* ---- Realisation Form ---- */
 
